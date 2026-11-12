@@ -1,0 +1,132 @@
+{
+  "owner": "mizcausevic-dev",
+  "catalog": [
+    "mizcausevic-dev/mcp-aeo-server",
+    "mizcausevic-dev/shipment-exception-command-center",
+    "mizcausevic-dev/regulatory-comment-intelligence-hub",
+    "mizcausevic-dev/contract-clause-obligation-graph",
+    "mizcausevic-dev/campaign-taxonomy-governor",
+    "mizcausevic-dev/booking-disruption-command-center",
+    "mizcausevic-dev/mcp-ai-tutor",
+    "mizcausevic-dev/tableau-permission-audit-lab",
+    "mizcausevic-dev/identity-risk-evidence-ledger",
+    "mizcausevic-dev/platform-margin-leak-report",
+    "mizcausevic-dev/tenant-access-control-plane",
+    "mizcausevic-dev/board-efficiency-proof-room",
+    "mizcausevic-dev/ratelimit-lab",
+    "mizcausevic-dev/midi-release-dashboard",
+    "mizcausevic-dev/vwo-experiment-governance-mirror",
+    "mizcausevic-dev/martech-experiment-evidence-stack",
+    "mizcausevic-dev/aeo-visualizer",
+    "mizcausevic-dev/gitvisualizer",
+    "mizcausevic-dev/slo-burn-rate-lab",
+    "mizcausevic-dev/webflow-webhook-router",
+    "mizcausevic-dev/canary-rollout-sim"
+  ],
+  "workspace": [
+    {
+      "fullName": "mizcausevic-dev/mcp-aeo-server",
+      "priority": "P0",
+      "pinned": true,
+      "notes": "Published MCP server. The dependency backlog blocks the next tagged release."
+    },
+    {
+      "fullName": "mizcausevic-dev/shipment-exception-command-center",
+      "priority": "P1",
+      "pinned": true,
+      "notes": "Demo repo shown to prospects; keep main green."
+    },
+    {
+      "fullName": "mizcausevic-dev/regulatory-comment-intelligence-hub",
+      "priority": "P1",
+      "notes": "Template fixes land here first, then roll out to the other Atlas repos."
+    },
+    {
+      "fullName": "mizcausevic-dev/contract-clause-obligation-graph",
+      "priority": "P2"
+    },
+    {
+      "fullName": "mizcausevic-dev/campaign-taxonomy-governor",
+      "priority": "P2"
+    },
+    {
+      "fullName": "mizcausevic-dev/booking-disruption-command-center",
+      "priority": "P2"
+    },
+    {
+      "fullName": "mizcausevic-dev/mcp-ai-tutor",
+      "priority": "P2"
+    },
+    {
+      "fullName": "mizcausevic-dev/tableau-permission-audit-lab",
+      "priority": "P2"
+    },
+    {
+      "fullName": "mizcausevic-dev/identity-risk-evidence-ledger",
+      "priority": "P3"
+    },
+    {
+      "fullName": "mizcausevic-dev/platform-margin-leak-report",
+      "priority": "P3"
+    },
+    {
+      "fullName": "mizcausevic-dev/tenant-access-control-plane",
+      "priority": "P2"
+    },
+    {
+      "fullName": "mizcausevic-dev/board-efficiency-proof-room",
+      "priority": "P3"
+    },
+    {
+      "fullName": "mizcausevic-dev/ratelimit-lab",
+      "priority": "P2"
+    },
+    {
+      "fullName": "mizcausevic-dev/midi-release-dashboard",
+      "priority": "P2"
+    }
+  ],
+  "nextActions": [
+    {
+      "repo": "mizcausevic-dev/mcp-aeo-server",
+      "title": "Group the open Dependabot updates into one PR and merge",
+      "dueInDays": -2
+    },
+    {
+      "repo": "mizcausevic-dev/mcp-aeo-server",
+      "title": "Review the two open PRs before tagging v1.1.0",
+      "dueInDays": 1
+    },
+    {
+      "repo": "mizcausevic-dev/shipment-exception-command-center",
+      "title": "Fix the failing workflow, then tag a release for the 20 unreleased commits",
+      "dueInDays": -1
+    },
+    {
+      "repo": "mizcausevic-dev/regulatory-comment-intelligence-hub",
+      "title": "Apply the Lighthouse Perf + A11y fixes to the Atlas renderer",
+      "dueInDays": 3
+    },
+    {
+      "repo": "mizcausevic-dev/tableau-permission-audit-lab",
+      "title": "Regenerate the lockfile so vitest matches @vitest/coverage-v8",
+      "dueInDays": 5
+    },
+    {
+      "repo": "mizcausevic-dev/contract-clause-obligation-graph",
+      "title": "Work through the hardening follow-up checklist",
+      "dueInDays": 9
+    },
+    {
+      "repo": "mizcausevic-dev/booking-disruption-command-center",
+      "title": "Read the failing run logs and decide fix vs. disable",
+      "dueInDays": null
+    },
+    {
+      "repo": "mizcausevic-dev/identity-risk-evidence-ledger",
+      "title": "Trigger a fresh CI run before the prod hardening pass",
+      "dueInDays": -6,
+      "status": "done"
+    }
+  ]
+}

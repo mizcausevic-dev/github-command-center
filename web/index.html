@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en" data-theme="bento" data-mode="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'" />
+    <meta name="referrer" content="no-referrer" />
+    <title>GitHub Command Center</title>
+    <meta name="description" content="A dashboard and REST API that rank which GitHub repositories need attention: failing CI, review queues, dependency backlogs, release drift, and the owner's own priorities and next actions." />
+    <meta property="og:title" content="GitHub Command Center" />
+    <meta property="og:description" content="Which repositories need attention, and why. A REST API showcase: ETags, If-Match, keyset pagination, idempotency keys, RFC 9457 problem details." />
+    <meta property="og:image" content="social-preview.png" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="theme-boot.js"></script>
+    <script type="module" src="app.js"></script>
+  </head>
+  <body>
+    <a class="sr-only" href="#queue">Skip to attention queue</a>
+    <header class="topbar">
+      <div class="wrap">
+        <div class="brand">
+          <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true">
+            <rect x="1" y="1" width="30" height="30" rx="8" fill="none" stroke="currentColor" stroke-width="2" />
+            <circle cx="16" cy="16" r="8" fill="none" stroke="currentColor" stroke-width="2" />
+            <circle cx="16" cy="16" r="2.5" fill="currentColor" />
+            <path d="M16 3v5M16 24v5M3 16h5M24 16h5" stroke="currentColor" stroke-width="2" />
+          </svg>
+          <div>
+            <h1>Command Center</h1>
+            <p>Which repositories need attention, and why</p>
+          </div>
+        </div>
+        <span class="mode-badge" id="mode-badge"><span class="dot"></span>connecting…</span>
+        <div class="controls">
+          <button class="btn" type="button" data-action="revalidate" title="Revalidate every GitHub resource with conditional requests (Cache-Control: no-cache)">
+            <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2.5v3h-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            Revalidate
+          </button>
+          <label class="sr-only" for="theme">Theme</label>
+          <select class="select" id="theme">
+            <option value="bento">Bento Grid</option>
+            <option value="cosmic">Cosmic Cyber</option>
+            <option value="swiss">Swiss Architect</option>
+            <option value="aqua">Aqua Web 2.0</option>
+            <option value="brutalist">Pop Brutalist</option>
+            <option value="tactical">Steel Tactical</option>
+            <option value="parchment">Parchment</option>
+          </select>
+          <button class="btn" type="button" id="mode-toggle" aria-label="Toggle light or dark mode">
+            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5a6.5 6.5 0 1 0 6.5 6.5A5 5 0 0 1 8 1.5z" fill="currentColor" /></svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <div id="notice"></div>
+      <section class="kpis" id="kpis" aria-label="Portfolio summary"></section>
+
+      <div class="grid">
+        <section class="card fx-spot" id="queue" aria-labelledby="queue-title">
+          <div class="card-head">
+            <div>
+              <h2 id="queue-title">Attention queue</h2>
+              <p>Ranked by a transparent 0-100 score. Select a repository for issues, activity and next actions.</p>
+            </div>
+            <label class="sr-only" for="sort">Sort</label>
+            <select class="select" id="sort">
+              <option value="-attention">Most attention</option>
+              <option value="name">Name A-Z</option>
+              <option value="-pushed">Recently pushed</option>
+              <option value="attention">Least attention</option>
+            </select>
+          </div>
+          <div class="filters" id="filters"></div>
+          <div class="queue" id="queue-list" aria-live="polite"></div>
+          <form class="connect" id="connect-form" autocomplete="off">
+            <label class="sr-only" for="connect-input">Repository to connect (owner/name)</label>
+            <input class="input" id="connect-input" name="fullName" placeholder="owner/name to connect" list="catalog" maxlength="140" required />
+            <datalist id="catalog"></datalist>
+            <button class="btn primary" type="submit">Connect repository</button>
+          </form>
+          <div class="form-msg" id="connect-msg" role="status"></div>
+        </section>
+
+        <div class="stack">
+          <section class="card fx-spot" aria-labelledby="breakdown-title">
+            <div class="card-head">
+              <div>
+                <h2 id="breakdown-title">Why they are flagged</h2>
+                <p>Score points by signal group, top 10</p>
+              </div>
+              <button class="btn small toggle-table" type="button" data-action="toggle-breakdown-table" aria-pressed="false">Table view</button>
+            </div>
+            <div id="breakdown"></div>
+          </section>
+          <section class="card fx-spot" aria-labelledby="ci-title">
+            <div class="card-head"><div><h2 id="ci-title">CI on default branch</h2><p>Latest completed run per workflow</p></div></div>
+            <div id="ci"></div>
+          </section>
+          <section class="card fx-spot" aria-labelledby="aging-title">
+            <div class="card-head"><div><h2 id="aging-title">Open work by age</h2><p>Issues, human PRs and dependency updates</p></div></div>
+            <div id="aging"></div>
+          </section>
+        </div>
+      </div>
+
+      <section class="card fx-spot" aria-labelledby="heat-title">
+        <div class="card-head"><div><h2 id="heat-title">Commit activity</h2><p>Default-branch commits per week, last 26 weeks</p></div></div>
+        <div id="heatmap"></div>
+      </section>
+
+      <div class="grid">
+        <section class="card" aria-labelledby="inspector-title">
+          <div class="card-head">
+            <div>
+              <h2 id="inspector-title">API inspector</h2>
+              <p>Every request this page made to the Command Center API. Select a row for headers and body.</p>
+            </div>
+            <button class="btn small" type="button" data-action="clear-log">Clear</button>
+          </div>
+          <div class="inspector" id="inspector"></div>
+        </section>
+        <section class="card" aria-labelledby="upstream-title">
+          <div class="card-head"><div><h2 id="upstream-title">GitHub upstream budget</h2><p>How the API spends GitHub's rate limit</p></div></div>
+          <div id="upstream"></div>
+        </section>
+      </div>
+    </main>
+
+    <footer>
+      <div class="wrap">
+        <span>GitHub Command Center. <a href="https://github.com/mizcausevic-dev/github-command-center">Source and API docs</a>.</span>
+        <span id="footer-meta"></span>
+      </div>
+    </footer>
+
+    <div class="scrim" id="scrim" data-action="close-drawer"></div>
+    <aside class="drawer" id="drawer" aria-hidden="true" aria-labelledby="drawer-title" role="dialog" aria-modal="true">
+      <div class="drawer-head" id="drawer-head"></div>
+      <div class="drawer-body" id="drawer-body"></div>
+    </aside>
+    <div class="tooltip" id="tooltip" role="tooltip"></div>
+  </body>
+</html>

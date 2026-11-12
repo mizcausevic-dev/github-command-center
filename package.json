@@ -1,0 +1,25 @@
+{
+  "name": "github-command-center",
+  "version": "1.0.0",
+  "description": "A REST API and dashboard that ranks which GitHub repositories need attention: open issues, review queues, failing CI, release drift, and your own priorities and next actions.",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "scripts": {
+    "start": "node src/server/main.ts",
+    "demo": "node src/server/main.ts --demo",
+    "build": "node scripts/build-web.ts",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "node --test \"test/**/*.test.ts\"",
+    "record": "node scripts/record-snapshot.ts",
+    "check": "npm run typecheck && npm test && npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "esbuild": "0.28.2",
+    "typescript": "7.0.2"
+  }
+}
