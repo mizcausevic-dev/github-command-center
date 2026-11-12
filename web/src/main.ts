@@ -690,8 +690,14 @@ async function boot(): Promise<void> {
   // Deep link: #repo=owner/name opens that repository's drawer.
   const linked = /^#repo=(.+)$/.exec(location.hash)?.[1];
   if (linked) {
-    const fullName = decodeURIComponent(linked);
-    if (state.all.some((r) => r.fullName.toLowerCase() === fullName.toLowerCase())) await openDrawer(fullName);
+    let fullName = "";
+    try {
+      fullName = decodeURIComponent(linked);
+    } catch {
+      /* malformed hash: ignore it rather than fail the dashboard */
+    }
+    const match = state.all.find((r) => r.fullName.toLowerCase() === fullName.toLowerCase());
+    if (match) await openDrawer(match.fullName);
   }
 }
 

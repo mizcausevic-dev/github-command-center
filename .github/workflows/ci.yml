@@ -34,5 +34,5 @@ jobs:
       - name: Pages artifact contains only allow-listed files
         run: |
           expected="app.js favicon.svg index.html snapshot.json social-preview.png styles.css theme-boot.js"
-          actual=$(ls dist/pages | sort | tr '\n' ' ' | sed 's/ $//')
+          actual=$(ls -A dist/pages | sort | tr '\n' ' ' | sed 's/ $//')
           test "$actual" = "$expected" || { echo "unexpected files: $actual"; exit 1; }

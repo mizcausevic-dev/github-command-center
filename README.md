@@ -42,11 +42,13 @@ npm run build
 npm run demo            # recorded snapshot, no token: http://127.0.0.1:8787
 ```
 
-Against your own repositories (use a fine-grained, read-only token):
+Against your own repositories, create a [fine-grained personal access token](https://github.com/settings/personal-access-tokens/new) limited to the repositories you want to track. Give it read-only access to Metadata, Contents, Issues, Pull requests and Actions. Avoid `gh auth token`: the GitHub CLI's OAuth token usually carries write scopes such as `repo` and `workflow`.
 
 ```bash
-GITHUB_TOKEN=$(gh auth token) REPOS=owner/repo-a,owner/repo-b npm start
+GITHUB_TOKEN=github_pat_... REPOS=owner/repo-a,owner/repo-b npm start
 ```
+
+The server binds `127.0.0.1` and answers only requests whose `Host` is a loopback name. That blocks DNS-rebinding pages from reaching the API through your browser. To expose it, set `HOST`, `API_TOKEN` (required off loopback) and `ALLOWED_HOSTS`.
 
 These responses were captured from the demo server:
 
@@ -124,13 +126,13 @@ src/api/       routes, representations, OpenAPI document, composition root (hand
 src/server/    node:http adapter and entry point
 web/           dashboard (TypeScript, SVG charts, 7 themes)
 scripts/       snapshot recorder, web build, screenshot generator
-test/          49 tests: node:test, no test framework dependency
+test/          53 tests: node:test, no test framework dependency
 ```
 
 Zero runtime dependencies. Dev dependencies: `typescript`, `esbuild`, `@types/node`. Node 22.18+ runs the TypeScript sources directly (type stripping).
 
 ```bash
-npm run check      # typecheck + 49 tests + build
+npm run check      # typecheck + 53 tests + build
 ```
 
 ## Reuse in another vertical

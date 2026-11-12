@@ -38,6 +38,7 @@ export interface StoreState {
 
 export const MAX_TRACKED_REPOS = 50;
 export const MAX_ACTIONS_PER_REPO = 25;
+export const MAX_TOTAL_ACTIONS_PER_REPO = 200;
 
 const key = (fullName: string) => fullName.toLowerCase();
 

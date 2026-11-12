@@ -6,9 +6,10 @@ import { readFile, stat } from "node:fs/promises";
 import { extname, resolve, sep } from "node:path";
 import { Readable } from "node:stream";
 
-const MAX_REQUEST_BYTES = 1_100_000; // webhook ceiling (1 MB) plus headroom
+export const WEBHOOK_MAX_BYTES = 1_100_000; // webhook ceiling (1 MB) plus headroom
+export const API_MAX_BYTES = 64 * 1024; // every other body; the API itself caps JSON at 16 KiB
 
-export async function toWebRequest(req: IncomingMessage, origin: string): Promise<Request> {
+export async function toWebRequest(req: IncomingMessage, origin: string, maxBytes = API_MAX_BYTES): Promise<Request> {
   const headers = new Headers();
   for (const [k, v] of Object.entries(req.headers)) {
     if (Array.isArray(v)) v.forEach((x) => headers.append(k, x));
@@ -21,7 +22,7 @@ export async function toWebRequest(req: IncomingMessage, origin: string): Promis
     let size = 0;
     for await (const chunk of req) {
       size += (chunk as Buffer).length;
-      if (size > MAX_REQUEST_BYTES) throw new RangeError("request body too large");
+      if (size > maxBytes) throw new RangeError("request body too large");
       chunks.push(chunk as Buffer);
     }
     body = new Uint8Array(Buffer.concat(chunks));
@@ -78,6 +79,8 @@ export async function serveStatic(root: string, pathname: string, method: string
     return null;
   }
   if (rel.includes("\0")) return null;
+  // No dotfiles or dot-directories, whatever the web root is set to.
+  if (rel.split("/").some((seg) => seg.startsWith("."))) return null;
   if (rel.endsWith("/")) rel += "index.html";
   const base = resolve(root);
   const file = resolve(base, "." + rel);
@@ -97,4 +100,26 @@ export async function serveStatic(root: string, pathname: string, method: string
   } catch {
     return null;
   }
+}
+
+/**
+ * DNS-rebinding guard. A page on an attacker's domain can rebind that name to
+ * 127.0.0.1 and then call this server "same-origin"; the Host header still
+ * carries the attacker's name, so only loopback names (plus explicit
+ * ALLOWED_HOSTS) are accepted.
+ */
+export function hostAllowed(hostHeader: string | undefined, port: number, extra: string[] = []): boolean {
+  if (!hostHeader) return false;
+  const host = hostHeader.trim().toLowerCase();
+  const allowed = new Set([
+    `127.0.0.1:${port}`,
+    `localhost:${port}`,
+    `[::1]:${port}`,
+    ...extra.map((h) => h.trim().toLowerCase()).filter(Boolean),
+  ]);
+  return allowed.has(host);
+}
+
+export function isLoopback(host: string): boolean {
+  return host === "127.0.0.1" || host === "::1" || host === "localhost";
 }

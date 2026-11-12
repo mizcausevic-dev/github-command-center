@@ -1,6 +1,6 @@
 // Records the demo snapshot from the live GitHub REST API.
 //
-//   GITHUB_TOKEN=$(gh auth token) npm run record
+//   GITHUB_TOKEN=<fine-grained read-only token> npm run record
 //
 // Safety properties (each enforced below, not just documented):
 //   1. Public repositories only: a private repo aborts the run.
@@ -28,7 +28,7 @@ interface Config {
 
 const token = process.env["GITHUB_TOKEN"];
 if (!token) {
-  console.error("Set GITHUB_TOKEN (for example: GITHUB_TOKEN=$(gh auth token) npm run record)");
+  console.error("Set GITHUB_TOKEN to a fine-grained, read-only token (see README)");
   process.exit(1);
 }
 
@@ -67,8 +67,26 @@ for (const fullName of config.catalog) {
 }
 process.stdout.write("\n");
 
-// Rule 3: drop issues/PRs authored by anyone other than the owner or a bot.
+// Rule 3: drop issues/PRs and events by anyone other than the owner or a bot, and blank
+// third-party commit messages (the commit still counts toward activity).
 let dropped = 0;
+const firstParty = (u: { login: string; type?: string } | null | undefined) =>
+  !!u && (u.login.toLowerCase() === config.owner.toLowerCase() || isBotLogin(u));
+for (const [key, entry] of Object.entries(responses)) {
+  if (!Array.isArray(entry.body)) continue;
+  if (/\/events(\?|$)/.test(key)) {
+    const kept = (entry.body as Array<{ actor: { login: string } }>).filter((e) => firstParty(e.actor));
+    dropped += entry.body.length - kept.length;
+    entry.body = kept;
+  } else if (/\/commits(\?|$)/.test(key)) {
+    for (const c of entry.body as Array<{ author: { login: string } | null; commit: { message: string } }>) {
+      if (!firstParty(c.author)) {
+        c.commit.message = "";
+        c.author = null;
+      }
+    }
+  }
+}
 for (const [key, entry] of Object.entries(responses)) {
   if (!/\/(issues|pulls)(\?|$)/.test(key) || !Array.isArray(entry.body)) continue;
   const before = entry.body.length;

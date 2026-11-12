@@ -1,13 +1,16 @@
 // Node entry point.
 //
-//   GITHUB_TOKEN=$(gh auth token) npm start     live GitHub data
+//   GITHUB_TOKEN=<fine-grained read-only token> npm start     live GitHub data
 //   npm run demo                                 recorded snapshot, no token needed
 //
 // Environment:
 //   GITHUB_TOKEN    read-only token (fine-grained, "Metadata" + "Contents" + "Issues" +
 //                   "Pull requests" + "Actions" read) - required in live mode
 //   HOST / PORT     bind address, default 127.0.0.1:8787 (loopback only)
-//   API_TOKEN       when set, every /api request needs "Authorization: Bearer <API_TOKEN>"
+//   API_TOKEN       when set, every /api request needs "Authorization: Bearer <API_TOKEN>";
+//                   required to bind a non-loopback HOST
+//   ALLOWED_HOSTS   extra Host header values to accept; loopback names are always allowed,
+//                   anything else gets 403 (DNS-rebinding guard)
 //   WEBHOOK_SECRET  enables POST /api/v1/webhooks/github (HMAC-SHA256)
 //   DATA_FILE       workspace state file, default .data/workspace.json
 //   REPOS           comma list of owner/name to connect on first start
@@ -21,7 +24,7 @@ import { GitHubClient } from "../github/client.ts";
 import { snapshotFetch, type Snapshot } from "../github/snapshot.ts";
 import { Store, parseStoreState, type StoreState } from "../domain/store.ts";
 import { seedState } from "../demo-seed.ts";
-import { PAGE_SECURITY_HEADERS, sendWebResponse, serveStatic, toWebRequest } from "./node-adapter.ts";
+import { PAGE_SECURITY_HEADERS, WEBHOOK_MAX_BYTES, hostAllowed, isLoopback, sendWebResponse, serveStatic, toWebRequest } from "./node-adapter.ts";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const demo = process.argv.includes("--demo");
@@ -30,6 +33,12 @@ const flag = (name: string) => process.argv.find((a) => a.startsWith(`--${name}=
 const host = env["HOST"] ?? "127.0.0.1";
 const port = Number(flag("port") ?? env["PORT"] ?? 8787);
 const token = env["GITHUB_TOKEN"];
+
+if (!isLoopback(host) && !env["API_TOKEN"]) {
+  console.error(`Refusing to bind ${host} without API_TOKEN: the API would be open to the network.`);
+  process.exit(1);
+}
+const allowedHosts = (env["ALLOWED_HOSTS"] ?? "").split(",").filter(Boolean);
 
 if (!demo && !token) {
   console.error("GITHUB_TOKEN is required in live mode. Use `npm run demo` to run against the recorded snapshot.");
@@ -101,7 +110,13 @@ const origin = `http://${host.includes(":") ? `[${host}]` : host}:${port}`;
 
 const server = createServer(async (req, res) => {
   try {
-    const request = await toWebRequest(req, origin);
+    if (!hostAllowed(req.headers.host, port, allowedHosts)) {
+      res.writeHead(403, { "content-type": "text/plain; charset=utf-8" });
+      res.end("Host not allowed. Use 127.0.0.1 or localhost, or add the name to ALLOWED_HOSTS.");
+      return;
+    }
+    const isWebhook = (req.url ?? "").split("?")[0] === "/api/v1/webhooks/github";
+    const request = await toWebRequest(req, origin, isWebhook ? WEBHOOK_MAX_BYTES : undefined);
     const path = new URL(request.url).pathname;
     if (path === "/healthz") {
       await sendWebResponse(res, new Response('{"status":"ok"}', { headers: { "content-type": "application/json", "cache-control": "no-store" } }));
@@ -125,6 +140,10 @@ const server = createServer(async (req, res) => {
     if (!tooLarge) console.error(err);
   }
 });
+
+server.headersTimeout = 10_000;
+server.requestTimeout = 30_000;
+server.maxConnections = 256;
 
 server.listen(port, host, () => {
   console.log(`github-command-center (${demo ? "demo snapshot" : "live"}) listening on ${origin}`);

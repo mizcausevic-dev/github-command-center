@@ -25,15 +25,21 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci --ignore-scripts
+      - run: npm run typecheck
       - run: npm test
       - run: npm run build
-      - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+      - name: Pages artifact contains only allow-listed files
+        run: |
+          expected="app.js favicon.svg index.html snapshot.json social-preview.png styles.css theme-boot.js"
+          actual=$(ls -A dist/pages | sort | tr '\n' ' ' | sed 's/ $//')
+          test "$actual" = "$expected" || { echo "unexpected files: $actual"; exit 1; }
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: dist/pages
 
   deploy:
     needs: build
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

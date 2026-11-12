@@ -7,12 +7,14 @@ export function parseLinkHeader(header: string | null): LinkMap {
   const out: LinkMap = {};
   if (!header) return out;
   for (const part of header.split(/,(?=\s*<)/)) {
-    const m = /^\s*<([^>]*)>\s*((?:;\s*[^;]+)*)$/.exec(part);
+    // Linear time: split the URL from its params, then split params on ";" (no nested quantifiers).
+    const m = /^\s*<([^>]*)>(.*)$/.exec(part);
     if (!m || m[1] === undefined) continue;
     const url = m[1];
-    const relMatch = /;\s*rel\s*=\s*"?([^";]+)"?/i.exec(m[2] ?? "");
-    if (!relMatch?.[1]) continue;
-    for (const rel of relMatch[1].trim().split(/\s+/)) {
+    const relParam = (m[2] ?? "").split(";").map((x) => x.trim()).find((x) => /^rel\s*=/i.test(x));
+    const relValue = relParam?.replace(/^rel\s*=\s*/i, "").replace(/^"|"$/g, "");
+    if (!relValue) continue;
+    for (const rel of relValue.trim().split(/\s+/)) {
       if (rel === "next" || rel === "prev" || rel === "first" || rel === "last") out[rel] = url;
     }
   }

@@ -5,7 +5,7 @@ import { keyComparator, linkHeader, paginate, readPageParams } from "../http/pag
 import { json, noContent } from "../http/respond.ts";
 import type { Router } from "../http/router.ts";
 import { base64urlEncode, sha256 } from "../http/encoding.ts";
-import { ACTION_STATUSES, MAX_ACTIONS_PER_REPO, type NextAction } from "../domain/store.ts";
+import { ACTION_STATUSES, MAX_ACTIONS_PER_REPO, MAX_TOTAL_ACTIONS_PER_REPO, type NextAction } from "../domain/store.ts";
 import { repoParam, type Services } from "./deps.ts";
 import { actionBody } from "./views.ts";
 import { allowQuery, enumParam } from "./query.ts";
@@ -68,7 +68,11 @@ export function registerActionRoutes(router: Router, s: Services): void {
         title: { required: true, rule: rules.string({ min: 3, max: 200 }) },
         dueOn: { rule: rules.date(), nullable: true },
       });
-      if (s.store.listActions(tracked.fullName).filter((a) => a.status === "open").length >= MAX_ACTIONS_PER_REPO) {
+      const existing = s.store.listActions(tracked.fullName);
+      if (existing.length >= MAX_TOTAL_ACTIONS_PER_REPO) {
+        throw errors.validation([{ pointer: "", detail: `limit of ${MAX_TOTAL_ACTIONS_PER_REPO} next actions per repository reached; delete completed ones` }]);
+      }
+      if (existing.filter((a) => a.status === "open").length >= MAX_ACTIONS_PER_REPO) {
         throw errors.validation([{ pointer: "", detail: `limit of ${MAX_ACTIONS_PER_REPO} open next actions per repository reached` }]);
       }
       const at = new Date(s.now()).toISOString();

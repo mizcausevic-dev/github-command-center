@@ -28,18 +28,18 @@
       "fullName": "mizcausevic-dev/mcp-aeo-server",
       "priority": "P0",
       "pinned": true,
-      "notes": "Published MCP server. The dependency backlog blocks the next tagged release."
+      "notes": "Sample note: clear the dependency backlog before the next tag."
     },
     {
       "fullName": "mizcausevic-dev/shipment-exception-command-center",
       "priority": "P1",
       "pinned": true,
-      "notes": "Demo repo shown to prospects; keep main green."
+      "notes": "Sample note: keep main green."
     },
     {
       "fullName": "mizcausevic-dev/regulatory-comment-intelligence-hub",
       "priority": "P1",
-      "notes": "Template fixes land here first, then roll out to the other Atlas repos."
+      "notes": "Sample note: land template fixes here first, then roll them out to sibling repos."
     },
     {
       "fullName": "mizcausevic-dev/contract-clause-obligation-graph",
